@@ -52,11 +52,18 @@ with gr.Blocks() as demo:
                 """
             )
             access_token_input = gr.Textbox(label="Personal Access Token", type="password")
-
-        generate_button = gr.Button("Generate README")
+        with gr.Row():
+            generate_button = gr.Button("Generate README")
+            clear_button = gr.Button("Clear", variant="secondary")
 
     status_output = gr.Label(label="Status")
     readme_output = gr.Markdown(label="Generated README")
+
+    clear_button.click(
+        fn=lambda: [None]*5,
+        inputs=[],
+        outputs=[repo_url_input, project_description_input, access_token_input, status_output, readme_output]
+    )
 
     generate_button.click(
         fn=generate_readme_from_repo,
@@ -65,4 +72,8 @@ with gr.Blocks() as demo:
     )
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=7860,
+        show_error=True
+    )
