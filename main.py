@@ -1,27 +1,33 @@
 from typing import Optional
 import gradio as gr
-from utils import clone_repo, clone_repo_with_tempfile, get_file_path, read_code_files, cleanup
+from utils import clone_repo_with_tempfile, get_file_path, read_code_files, cleanup
 from llm import generate_readme, generate_readme_V2
 
 
-
-def generate_readme_from_repo(repo_url:str, project_description:str, access_token:Optional[str]=None):
+def generate_readme_from_repo(
+    repo_url:str, 
+    project_description:str, 
+    access_token:Optional[str]=None
+) -> str:
     """Main function to orchestrate the README generation process."""
-    # TODO: write to temp folder
     repo_name = repo_url.split('/')[-1].replace('.git', '')
     user_name = repo_url.split('/')[-2]
     local_repo_dir = get_file_path(f"temp_{repo_name}")
 
     temp_dir = clone_repo_with_tempfile(repo_url, access_token)
-
-    code_content = read_code_files(local_repo_dir)
+    code_content = read_code_files(temp_dir.name)
     if not code_content:
         cleanup(local_repo_dir)
         return "No code files found in the repository.", ""
 
-    # readme_content = generate_readme(project_description, code_content)
-    readme_content = generate_readme_V2(user_name, repo_name, project_description, code_content)
-    # cleanup(local_repo_dir)
+
+    readme_content = generate_readme_V2(
+        user_name,
+        repo_name, 
+        project_description, 
+        code_content
+    )
+
     temp_dir.cleanup()
     return "README Generation Complete!", readme_content if readme_content else "Failed to generate README."
 
@@ -62,13 +68,26 @@ with gr.Blocks() as demo:
     clear_button.click(
         fn=lambda: [None]*5,
         inputs=[],
-        outputs=[repo_url_input, project_description_input, access_token_input, status_output, readme_output]
+        outputs=[
+            repo_url_input, 
+            project_description_input, 
+            access_token_input, 
+            status_output, 
+            readme_output
+        ]
     )
 
     generate_button.click(
         fn=generate_readme_from_repo,
-        inputs=[repo_url_input, project_description_input, access_token_input],
-        outputs=[status_output, readme_output]
+        inputs=[
+            repo_url_input, 
+            project_description_input, 
+            access_token_input
+        ],
+        outputs=[
+            status_output, 
+            readme_output
+        ]
     )
 
 if __name__ == "__main__":
