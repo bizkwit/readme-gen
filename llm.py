@@ -22,11 +22,18 @@ GENERATION_CONFIG = GenerationConfig(
 
 
 
-def generate_readme(project_description:str, code_content:dict)->str:
+def generate_readme(
+    user_name:str,
+    repo_name:str,
+    project_description:str,
+    code_content:dict
+)->str:
     """
     Generates a README file based on the given project description and code content.
 
     Args:
+        user_name (str): The username of the github user.
+        repo_name (str): The name of the github repository.
         project_description (str): A brief description of the project.
         code_content (dict): A dictionary mapping filenames to their contents.
 
@@ -46,27 +53,34 @@ def generate_readme(project_description:str, code_content:dict)->str:
     for filename, content in code_content.items():
         prompt += f"\n--- {filename} ---\n{content}\n"
 
-    prompt += """
+    prompt += f"""
 
     Based on the project description and the provided code, generate a detailed README.md file.
     The README should include the following sections (if applicable):
 
+    - Project shields
     - Project Title
     - Overview/Introduction
+    - Table of Contents
     - Features
+    - Technologies (include icons is possible)
     - Getting Started (Installation, Prerequisites, Usage)
     - Examples (if relevant)
+    - Roadmap (with checkboxes for completed tasks)
     - API Reference (if it's a library or has an API)
     - Contributing
     - License
     - Acknowledgements (if applicable)
 
+    here is the repo name: {repo_name}
+    here is the user name: {user_name}
     Be clear, concise, and informative. Use markdown formatting.
     """
 
     try:
         response = MODEL.generate_content(prompt, generation_config=GENERATION_CONFIG)
-        return response.text
+        print(response.text)
+        return response.text.strip('```markdown\n').strip('```')
     except Exception as e:
         return f"Error generating README: {e}"
 
