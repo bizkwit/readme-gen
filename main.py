@@ -85,7 +85,7 @@ with gr.Blocks() as demo:
 
 
     clear_button.click(
-        fn=lambda: [None] * 5 + [gr.File.update(visible=False)],
+        fn=lambda: [None] * 5 + [gr.File(visible=False)],
         inputs=[],
         outputs=[
             repo_url_input,
