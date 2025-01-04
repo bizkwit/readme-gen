@@ -9,8 +9,9 @@ pandas = "*"
 numpy = "*"
 google-generativeai = "*"
 python-dotenv = "*"
+gradio-modal = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.13.1"
+python_version = ">=3.11"

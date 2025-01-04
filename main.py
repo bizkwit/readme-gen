@@ -1,16 +1,30 @@
 import tempfile
 from typing import Optional
 import gradio as gr
-from utils import clone_repo_with_tempfile, get_file_path, read_code_files, cleanup
-from llm import generate_readme, generate_readme_V2
+from gradio_modal import Modal
+from utils import (
+    INIT_CSS,
+    TITLE_HTML, 
+    clone_repo_with_tempfile, 
+    get_file_path, 
+    read_code_files, 
+    cleanup
+)
+from llm import generate_readme
 
 
 def generate_readme_from_repo(
+    llm_dropdown:str,
+    api_key:str,
     repo_url:str, 
     project_description:str, 
     access_token:Optional[str]=None
 ) -> str:
     """Main function to orchestrate the README generation process."""
+    
+    print("LLM SELECTED: "  + llm_dropdown)
+    print("API KEY: "  + api_key)
+
     repo_name = repo_url.split('/')[-1].replace('.git', '')
     user_name = repo_url.split('/')[-2]
     local_repo_dir = get_file_path(f"temp_{repo_name}")
@@ -21,14 +35,9 @@ def generate_readme_from_repo(
         cleanup(local_repo_dir)
         return "No code files found in the repository.", ""
 
-
-    # readme_content = generate_readme_V2(
-    #     user_name,
-    #     repo_name, 
-    #     project_description, 
-    #     code_content
-    # )
     readme_content = generate_readme(
+        llm_dropdown,
+        api_key,
         user_name,
         repo_name,
         project_description, 
@@ -45,16 +54,40 @@ def generate_readme_from_repo(
     else:
         return "Failed to generate README.", "Failed to generate README.", None
 
-with gr.Blocks() as demo:
-    gr.Markdown("# GitHub README Generator")
-    gr.Markdown("Enter the GitHub repository URL and a brief description of your project to generate a README file using an LLM.")
-    
+with gr.Blocks(
+    title="GitHub README Generator",
+    # theme="bethecloud/storj_theme",
+    css=INIT_CSS
+) as demo:
+    with Modal(visible=False) as modal:
+        gr.Markdown("## LLM Config")
+
+        llm_choices = ["google-gemini"] #TODO: add more llm options
+        llm_dropdown = gr.Dropdown(
+            label="LLM", 
+            choices=llm_choices, 
+            value=llm_choices[0]
+        )
+
+        llm_dropdown.change(fn=lambda x: x,inputs=llm_dropdown,outputs=llm_dropdown)
+        api_key = gr.Textbox(label="API Key", type="password")
+    with gr.Row():
+        with gr.Column(scale=12):
+            title = gr.HTML(TITLE_HTML)
+            gr.Markdown("Enter the GitHub repository URL and a brief description of your project to generate a README file using an LLM.")
+        with gr.Column(scale=1, elem_classes="right-container"):
+            api_btn = gr.Button("LLM Config", elem_classes="api-button", size="sm")
+            api_btn.click(
+                fn=lambda: gr.update(visible=True),
+                outputs=[modal]
+            )
     with gr.Row(equal_height=True):
         with gr.Column(scale=1, min_width=500):
             with gr.Group():
                 repo_url_input = gr.Textbox(label="GitHub Repository URL")
                 project_description_input = gr.Textbox(label="Project Description (optional)")
-                with gr.Accordion("Personal Access Token (for private repos)", open=True):
+                with gr.Accordion("Advanced Settings", open=True):
+                    gr.Markdown("# Personal Access Token (for private repos)")
                     gr.Markdown(
                         """
                         To generate a README for a private repository, you need to provide a Personal Access Token (PAT) from GitHub.
@@ -75,12 +108,16 @@ with gr.Blocks() as demo:
                     )
                     access_token_input = gr.Textbox(label="Personal Access Token", type="password")
         with gr.Column(scale=4):
-            status_output = gr.Label(label="Status")
-            readme_output = gr.Markdown(label="Generated README",min_height=500,max_height=500)
-            readme_file_output = gr.File(label="Download README", visible=False)
             with gr.Row():
                 generate_button = gr.Button("Generate README")
-                clear_button = gr.Button("Clear", variant="secondary")
+                clear_button = gr.Button("Clear", variant="secondary", elem_classes="clear-button")
+            status_output = gr.Label(label="Status")
+            readme_output = gr.Markdown(
+                label="Generated README",
+                min_height=500,
+                max_height=500
+            )
+            readme_file_output = gr.File(label="Download README", visible=False)
 
 
 
@@ -102,6 +139,8 @@ with gr.Blocks() as demo:
     generate_button.click(
         fn=generate_readme_from_repo,
         inputs=[
+            llm_dropdown,
+            api_key,
             repo_url_input,
             project_description_input,
             access_token_input

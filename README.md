@@ -58,29 +58,27 @@ This project provides a Gradio-based web application that leverages Google's Gem
 
 ## Getting Started
 
-**Prerequisites:**
+### Prerequisites:
 
-* Python 3.x
-* `pip install -r requirements.txt`
+* Python `>=3.11`
+* `pip install pipenv`
 
-**Installation:**
-
+### Installation:
 1. Clone the repository: `git clone https://github.com/bizkwit/readme-gen.git`
 2. Navigate to the project directory: `cd readme-gen`
-3. Install dependencies: `pip install -r requirements.txt`
-4. Set up your Google Cloud API key and save it in a `.env` file as `GOOGLE_API_KEY`
+3. run `pipenv install` to generate the virtual environment and install all dependencies.
+4. run `pipenv shell` to run the virtual environemt
 
-**Usage:**
 
-1. Run the application: `python main.py`
-2. Access the Gradio interface in your browser (usually at `http://0.0.0.0:7860`).
-3. Enter the GitHub repository URL and a project description.
-4. For private repositories, provide your GitHub personal access token.
-5. Click "Generate README".
+### Usage:
 
-## Examples
+1. Run the application: `gradio main.py`
+2. Access the Gradio interface in your browser (usually at `http://localhost:7860/`).
+3. press the LLM config button to select your desired model and insret your api key.
+4. Enter the GitHub repository URL and a project description.
+5. For private repositories, provide your GitHub personal access token.
+6. Click "Generate README". you will also have an option to download the file
 
-You can find example usage in the [examples](examples) directory.
 
 ## Roadmap
 
@@ -88,6 +86,7 @@ You can find example usage in the [examples](examples) directory.
 - [x] Gradio UI implementation
 - [x] Private repository support
 - [x] Improved error handling
+- [ ] Add more model options (currently support only google gemini)
 - [ ] Add more robust code analysis capabilities
 - [ ] Implement a more sophisticated template system
 - [ ] Integrate with GitHub Actions for automated README updates
