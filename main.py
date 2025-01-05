@@ -1,5 +1,8 @@
 import tempfile
 from typing import Optional
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+import uvicorn
 import gradio as gr
 from gradio_modal import Modal
 from utils import (
@@ -11,6 +14,8 @@ from utils import (
     cleanup
 )
 from llm import generate_readme
+
+app = FastAPI()
 
 
 def generate_readme_from_repo(
@@ -24,6 +29,9 @@ def generate_readme_from_repo(
     
     print("LLM SELECTED: "  + llm_dropdown)
     print("API KEY: "  + api_key)
+    if not api_key:
+        gr.Warning("API key is required for generating README. please press the LLM config button to select your desired model and insret your api key.")
+        return "API Key missing", "Failed to generate README.", None
 
     repo_name = repo_url.split('/')[-1].replace('.git', '')
     user_name = repo_url.split('/')[-2]
@@ -57,7 +65,8 @@ def generate_readme_from_repo(
 with gr.Blocks(
     title="GitHub README Generator",
     # theme="bethecloud/storj_theme",
-    css=INIT_CSS
+    css=INIT_CSS,
+    head='<link rel="icon" href="/static/logo.png" type="image/png">'
 ) as demo:
     with Modal(visible=False) as modal:
         gr.Markdown("## LLM Config")
@@ -111,7 +120,7 @@ with gr.Blocks(
             with gr.Row():
                 generate_button = gr.Button("Generate README")
                 clear_button = gr.Button("Clear", variant="secondary", elem_classes="clear-button")
-            status_output = gr.Label(label="Status")
+            status_output = gr.Label(label="Status", visible=False)
             readme_output = gr.Markdown(
                 label="Generated README",
                 min_height=500,
@@ -164,9 +173,13 @@ with gr.Blocks(
         ]
     )
 
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app = gr.mount_gradio_app(app, demo, path="/")
 if __name__ == "__main__":
-    demo.launch(
-        server_name="0.0.0.0",
-        server_port=7860,
-        show_error=True
-    )
+    uvicorn.run(app, host="0.0.0.0", port=9000)
+    # demo.launch(
+    #     server_name="0.0.0.0",
+    #     server_port=7860,
+    #     show_error=True
+    # )

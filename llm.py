@@ -34,10 +34,13 @@ def generate_readme(
 )->str:
     """
     Generates a README file based on the given project description and code content.
+    handling potential token limits by summarizing larger files.
 
     Args:
-        user_name (str): The username of the github user.
-        repo_name (str): The name of the github repository.
+        llm_dropdown (str): The LLM model to use.
+        api_key (str): API key for the LLM.
+        user_name (str): The username of the GitHub user.
+        repo_name (str): The name of the GitHub repository.
         project_description (str): A brief description of the project.
         code_content (dict): A dictionary mapping filenames to their contents.
 
@@ -54,8 +57,21 @@ def generate_readme(
     Here is the code from the project (filenames are included):
     """
 
+
+    SUMMARY_MODEL, SUMMARY_GENERATION_CONFIG = init_model(llm_dropdown, api_key)
     for filename, content in code_content.items():
-        prompt += f"\n--- {filename} ---\n{content}\n"
+        num_lines = len(content.splitlines())
+        if num_lines > 500:
+            summary_prompt = f"Summarize the purpose and key functionalities of the following code file:\n\n```\n{content}\n```"
+            try:
+                summary_response = SUMMARY_MODEL.generate_content(summary_prompt, generation_config=SUMMARY_GENERATION_CONFIG)
+                cleaned_summary = summary_response.text.strip('```markdown\n').strip('```')
+                prompt += f"\n--- {filename} ---\n{cleaned_summary}\n"
+            except Exception as e:
+                print(f"Error generating summary for {filename}: {e}")
+                prompt += f"\n--- {filename} (Could not summarize) ---\n(File is large, consider reviewing the code directly)\n"
+        else:
+            prompt += f"\n--- {filename} ---\n{content}\n"
 
     prompt += f"""
 
